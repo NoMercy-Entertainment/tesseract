@@ -75,7 +75,13 @@ bool NetworkBuilder::InitNetwork(int num_outputs, const char *network_spec, int 
   (*network)->InitWeights(weight_range, randomizer);
   (*network)->SetupNeedsBackprop(false);
   if (bottom_series != nullptr) {
-    bottom_series->AppendSeries(*network);
+    if ((*network)->type() == NT_SERIES) {
+      bottom_series->AppendSeries(*network);
+    } else {
+      // BuildFromString may return a single layer (e.g. FullyConnected
+      // for "O1c<N>") rather than a Series. Add it directly to the stack.
+      bottom_series->AddToStack(*network);
+    }
     *network = bottom_series;
   }
   (*network)->CacheXScaleFactor((*network)->XScaleFactor());
