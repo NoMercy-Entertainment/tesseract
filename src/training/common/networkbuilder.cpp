@@ -50,12 +50,18 @@ bool NetworkBuilder::InitNetwork(int num_outputs, const char *network_spec, int 
   StaticShape input_shape;
   if (append_index >= 0) {
     // Split the current network after the given append_index.
-    ASSERT_HOST(*network != nullptr && (*network)->type() == NT_SERIES);
+    if (*network == nullptr) {
+      tprintf("Error: no network loaded for --append_index\n");
+      return false;
+    }
+    tprintf("Network type for --append_index: %d (NT_SERIES=%d)\n",
+            static_cast<int>((*network)->type()), static_cast<int>(NT_SERIES));
+    ASSERT_HOST((*network)->type() == NT_SERIES);
     auto *series = static_cast<Series *>(*network);
     Series *top_series = nullptr;
     series->SplitAt(append_index, &bottom_series, &top_series);
     if (bottom_series == nullptr || top_series == nullptr) {
-      tprintf("Yikes! Splitting current network failed!!\n");
+      tprintf("Yikes! Splitting current network at index %d failed!!\n", append_index);
       return false;
     }
     input_shape = bottom_series->OutputShape(input_shape);
